@@ -102,7 +102,7 @@ public class SokoView extends View{
 
                 if (Math.abs(deltaX) > Math.abs(deltaY)) {
                     if (deltaX > 0) {
-                        Toast.makeText(getContext(), "Swiped Right - Right Area", Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(getContext(), "Swiped Right - Right Area", Toast.LENGTH_SHORT).show();
 
                         //Collisions
                         if (level[pY*lH + pX + 1] == 1) {
@@ -110,14 +110,29 @@ public class SokoView extends View{
                         }
 
                         //Collisions with boxes
-                        if (level[pY*lH + pX + 1] == 2) {
-                            if (level[pY*lH + pX + 2] == 1 || level[pY*lH + pX + 2] == 2) {
-                                invalidate();
+                        if (level[pY*lH + pX + 1] == 2 || level[pY*lH + pX + 1] == 5) {
+                            if (level[pY*lH + pX + 2] == 1 || level[pY*lH + pX + 2] == 2 || level[pY*lH + pX + 2] == 5) {
+
                                 break;
                             }
 
-                            level[pY*lH + pX + 2] = 2;
+                            if (level[pY*lH + pX] == 0 || level[pY*lH + pX] == 4) {
+                                level[pY * lH + pX] = 0;
+                            }
+
+                            if (levelCopy[pY*lH + pX] == 3){
+                                level[pY*lH + pX] = 3;
+                            }
+
                             level[pY*lH + pX + 1] = 4;
+
+                            //Change Box To Green If There Is A Cross
+                            if (levelCopy[pY*lH + pX + 2] == 3){
+                                level[pY*lH + pX + 2] = 5;
+                            }else{
+                                level[pY*lH + pX + 2] = 2;
+                            }
+
                             pX++;
 
                             break;
@@ -126,39 +141,243 @@ public class SokoView extends View{
                         //Under me was a cross
                         if (levelCopy[pY*lH + pX] == 3) {
                             level[pY*lH + pX] = 3;
+                            level[pY*lH + pX + 1] = 4;
+
                             pX++;
 
-                        } else if (levelCopy[pY*lH + pX] == 0 || levelCopy[pY*lH + pX] == 4 || level[pY*lH + pX] == 0) {
+                            break;
+                        }
+
+                        //Under me is nothing
+                        if (level[pY*lH + pX] == 0) {
                             level[pY*lH + pX] = 0;
+                            level[pY*lH + pX + 1] = 4;
+
                             pX++;
 
+                            break;
+                        }
+
+                        //Next To Me Is Nothing Or Cross
+                        if (level[pY*lH + pX + 1] == 0 || level[pY*lH + pX + 1] == 3){
+                            level[pY*lH + pX] = 0;
+
+                            level[pY*lH + pX + 1] = 4;
+
+                            pX++;
+
+                            break;
                         }
 
 
 
                     } else {
-                        Toast.makeText(getContext(), "Swiped Left - Left Area", Toast.LENGTH_SHORT).show();
-                        level[pY*lH + pX] = 0;
+                        //Toast.makeText(getContext(), "Swiped Left - Left Area", Toast.LENGTH_SHORT).show();
 
-                        pX--;
+                        //Collisions
+                        if (level[pY*lH + pX - 1] == 1) {
+                            break;
+                        }
 
-                        level[pY*lH + pX] = 4;
+                        //Collisions with boxes
+                        if (level[pY*lH + pX - 1] == 2 || level[pY*lH + pX - 1] == 5) {
+                            if (level[pY*lH + pX - 2] == 1 || level[pY*lH + pX - 2] == 2 || level[pY*lH + pX - 2] == 5) {
+
+                                break;
+                            }
+
+                            if (level[pY*lH + pX] == 0 || level[pY*lH + pX] == 4) {
+                                level[pY * lH + pX] = 0;
+                            }
+
+                            if (levelCopy[pY*lH + pX] == 3){
+                                level[pY*lH + pX] = 3;
+                            }
+
+                            level[pY*lH + pX - 1] = 4;
+
+                            //Change Box To Green If There Is A Cross
+                            if (levelCopy[pY*lH + pX - 2] == 3){
+                                level[pY*lH + pX - 2] = 5;
+                            }else{
+                                level[pY*lH + pX - 2] = 2;
+                            }
+
+                            pX--;
+
+                            break;
+                        }
+
+                        //Under me was a cross
+                        if (levelCopy[pY*lH + pX] == 3) {
+                            level[pY*lH + pX] = 3;
+                            level[pY*lH + pX - 1] = 4;
+
+                            pX--;
+
+                            break;
+                        }
+
+                        //Under me is nothing
+                        if (level[pY*lH + pX] == 0) {
+                            level[pY*lH + pX] = 0;
+
+                            level[pY*lH + pX - 1] = 4;
+
+                            pX--;
+
+                            break;
+                        }
+
+                        //Next To Me Is Nothing Or Cross
+                        if (level[pY*lH + pX - 1] == 0 || level[pY*lH + pX - 1] == 3){
+                            level[pY*lH + pX] = 0;
+
+                            level[pY*lH + pX - 1] = 4;
+
+                            pX--;
+
+                            break;
+                        }
                     }
                 } else {
                     if (deltaY > 0) {
-                        Toast.makeText(getContext(), "Swiped Down - Bottom Area", Toast.LENGTH_SHORT).show();
-                        level[pY*lH + pX] = 0;
+                        //Toast.makeText(getContext(), "Swiped Down - Bottom Area", Toast.LENGTH_SHORT).show();
 
-                        pY++;
+                        //Collisions
+                        if (level[(pY + 1)*lH + pX] == 1) {
+                            break;
+                        }
 
-                        level[pY*lH + pX] = 4;
+                        //Collisions with boxes
+                        if (level[(pY + 1)*lH + pX] == 2 || level[(pY + 1)*lH + pX] == 5) {
+                            if (level[(pY + 2)*lH + pX] == 1 || level[(pY + 2)*lH + pX] == 2 || level[(pY + 2)*lH + pX] == 5) {
+
+                                break;
+                            }
+
+                            if (level[pY*lH + pX] == 0 || level[pY*lH + pX] == 4) {
+                                level[pY * lH + pX] = 0;
+                            }
+
+                            if (levelCopy[pY*lH + pX] == 3){
+                                level[pY*lH + pX] = 3;
+                            }
+
+                            level[(pY + 1)*lH + pX] = 4;
+
+                            //Change Box To Green If There Is A Cross
+                            if (levelCopy[(pY + 2)*lH + pX] == 3){
+                                level[(pY + 2)*lH + pX] = 5;
+                            }else{
+                                level[(pY + 2)*lH + pX] = 2;
+                            }
+
+                            pY++;
+
+                            break;
+                        }
+
+                        //Under me was a cross
+                        if (levelCopy[pY*lH + pX] == 3) {
+                            level[pY*lH + pX] = 3;
+                            level[(pY + 1)*lH + pX] = 4;
+
+                            pY++;
+
+                            break;
+                        }
+
+                        //Under me is nothing
+                        if (level[pY*lH + pX] == 0) {
+                            level[pY*lH + pX] = 0;
+
+                            level[(pY + 1)*lH + pX] = 4;
+
+                            pY++;
+
+                            break;
+                        }
+
+                        //Next To Me Is Nothing Or Cross
+                        if (level[(pY + 1)*lH + pX] == 0 || level[(pY + 1)*lH + pX] == 3){
+                            level[pY*lH + pX] = 0;
+
+                            level[(pY + 1)*lH + pX] = 4;
+
+                            pY++;
+
+                            break;
+                        }
+
                     } else {
-                        Toast.makeText(getContext(), "Swiped Up - Top Area", Toast.LENGTH_SHORT).show();
-                        level[pY*lH + pX] = 0;
+                        //Toast.makeText(getContext(), "Swiped Up - Top Area", Toast.LENGTH_SHORT).show();
 
-                        pY--;
+                        //Collisions
+                        if (level[(pY - 1)*lH + pX] == 1) {
+                            break;
+                        }
 
-                        level[pY*lH + pX] = 4;
+                        //Collisions with boxes
+                        if (level[(pY - 1)*lH + pX] == 2 || level[(pY - 1)*lH + pX] == 5) {
+                            if (level[(pY - 2)*lH + pX] == 1 || level[(pY - 2)*lH + pX] == 2 || level[(pY - 2)*lH + pX] == 5) {
+
+                                break;
+                            }
+
+                            if (level[pY*lH + pX] == 0 || level[pY*lH + pX] == 4) {
+                                level[pY * lH + pX] = 0;
+                            }
+
+                            if (levelCopy[pY*lH + pX] == 3){
+                                level[pY*lH + pX] = 3;
+                            }
+
+                            level[(pY - 1)*lH + pX] = 4;
+
+                            //Change Box To Green If There Is A Cross
+                            if (levelCopy[(pY - 2)*lH + pX] == 3){
+                                level[(pY - 2)*lH + pX] = 5;
+                            }else{
+                                level[(pY - 2)*lH + pX] = 2;
+                            }
+
+                            pY--;
+
+                            break;
+                        }
+
+                        //Under me was a cross
+                        if (levelCopy[pY*lH + pX] == 3) {
+                            level[pY*lH + pX] = 3;
+                            level[(pY - 1)*lH + pX] = 4;
+
+                            pY--;
+
+                            break;
+                        }
+
+                        //Under me is nothing
+                        if (level[pY*lH + pX] == 0) {
+                            level[pY*lH + pX] = 0;
+
+                            level[(pY - 1)*lH + pX] = 4;
+
+                            pY--;
+
+                            break;
+                        }
+
+                        //Next To Me Is Nothing Or Cross
+                        if (level[(pY - 1)*lH + pX] == 0 || level[(pY - 1)*lH + pX] == 3){
+                            level[pY*lH + pX] = 0;
+
+                            level[(pY - 1)*lH + pX] = 4;
+
+                            pY--;
+
+                            break;
+                        }
                     }
                 }
 
@@ -168,6 +387,8 @@ public class SokoView extends View{
 
         return super.onTouchEvent(event);
     }
+
+    boolean finishedLevel = false;
 
     //@SuppressLint("DrawAllocation")
     @SuppressLint("DrawAllocation")
@@ -184,5 +405,24 @@ public class SokoView extends View{
             }
         }
 
+        if (CheckIfLevelIsComplete() && !finishedLevel){
+            Toast.makeText(getContext(), "FINISHED!!!!", Toast.LENGTH_SHORT).show();
+
+            finishedLevel = true;
+        }
+    }
+
+    boolean CheckIfLevelIsComplete(){
+        boolean finished = true;
+
+        for (int y = 0; y < lH; y++) {
+            for (int x = 0; x < lW; x++) {
+                if (level[y*lH + x] == 2){
+                    finished = false;
+                }
+            }
+        }
+
+        return finished;
     }
 }
