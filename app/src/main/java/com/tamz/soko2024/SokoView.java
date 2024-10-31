@@ -48,9 +48,12 @@ public class SokoView extends View{
         init(context);
     }
 
+    private MainActivity mainActivity;
+
     public SokoView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init(context);
+        mainActivity = (MainActivity) context;
     }
 
     public SokoView(Context context, AttributeSet attrs, int defStyleAttr) {
@@ -409,6 +412,8 @@ public class SokoView extends View{
             Toast.makeText(getContext(), "FINISHED!!!!", Toast.LENGTH_SHORT).show();
 
             finishedLevel = true;
+
+            mainActivity.stopTimer();
         }
     }
 
@@ -424,5 +429,16 @@ public class SokoView extends View{
         }
 
         return finished;
+    }
+
+    public void restartLevel() {
+        System.arraycopy(levelCopy, 0, level, 0, lW * lH);
+
+        pX = 6;
+        pY = 4;
+
+        finishedLevel = false;
+
+        invalidate();
     }
 }
