@@ -80,6 +80,7 @@ public class SokoView extends View{
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         width = w / lW;
         height = h / lH;
+        
         super.onSizeChanged(w, h, oldw, oldh);
     }
 
