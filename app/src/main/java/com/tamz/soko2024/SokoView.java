@@ -80,7 +80,7 @@ public class SokoView extends View{
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         width = w / lW;
         height = h / lH;
-        
+
         super.onSizeChanged(w, h, oldw, oldh);
     }
 
@@ -103,6 +103,10 @@ public class SokoView extends View{
 
                 float deltaX = endX - startX;
                 float deltaY = endY - startY;
+
+                if (finishedLevel){
+                    break;
+                }
 
                 if (Math.abs(deltaX) > Math.abs(deltaY)) {
                     if (deltaX > 0) {
