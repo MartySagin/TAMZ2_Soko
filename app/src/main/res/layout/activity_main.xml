@@ -45,6 +45,13 @@
             android:text="Restart Level"
             android:textColor="#FFFFFF"
             android:textSize="18sp" />
+
+
+        <Button
+            android:id="@+id/selectLevelButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Vyber Level" />
     </LinearLayout>
 
 
