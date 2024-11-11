@@ -1,47 +1,64 @@
 package com.tamz.soko2024;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 public class LevelSelectionActivity extends AppCompatActivity {
+    private RecyclerView levelRecyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_level_selection);
 
-        ListView levelListView = findViewById(R.id.level_list_view);
+        levelRecyclerView = findViewById(R.id.level_recycler_view);
+        levelRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        // Seznam názvů levelů
+        ArrayList<String> levels = getLevelsFromFile();
+        int previewSize = 150; // Náhled levelu v pixelech
+
+        LevelPreviewAdapter adapter = new LevelPreviewAdapter(this, levels, levels.size(), previewSize, previewSize);
+        levelRecyclerView.setAdapter(adapter);
+    }
+
+    private ArrayList<String> getLevelsFromFile() {
         ArrayList<String> levels = new ArrayList<>();
-        for (int i = 1; i <= 15; i++) {
-            levels.add("Level " + i);
+
+        try {
+            InputStream inputStream = getAssets().open("levels/levels.txt");
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+
+                if (line.startsWith("Level")) {
+                    String[] parts = line.split(" ");
+                    int levelNumber = Integer.parseInt(parts[1]);
+
+                    String levelName = reader.readLine().trim().replace("'", "");
+                    levels.add("Level " + levelNumber + ": " + levelName);
+
+                    while ((line = reader.readLine()) != null && !line.isEmpty()) {
+                        // Předpokládáme, že grafika úrovně končí prázdným řádkem
+                    }
+                }
+            }
+            reader.close();
+
+        } catch (IOException e) {
+            Log.e("LevelSelectionActivity", "Error reading levels file", e);
         }
 
-        // Nastavení ArrayAdapteru
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, levels);
-        levelListView.setAdapter(adapter);
-
-        // Nastavení klikací události pro každý level
-        levelListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                int selectedLevel = position + 1; // Levely začínají od 1
-                Intent intent = new Intent(LevelSelectionActivity.this, MainActivity.class);
-                intent.putExtra("SELECTED_LEVEL", selectedLevel);
-
-                Log.d("LevelSelectionActivity", "Selected level: " + selectedLevel);
-
-                startActivity(intent); // Spustí MainActivity
-                finish();
-            }
-        });
+        return levels;
     }
 }
