@@ -18,11 +18,15 @@ public class MainActivity extends AppCompatActivity implements SokoView.OnLevelC
 
     private static final int LEVEL_SELECTION_REQUEST_CODE = 1;
     private TextView timerTextView;
+    private TextView movesTextView;
+
     private Button restartButton;
-    private Button selectLevelButton; // Nové tlačítko pro výběr levelu
+    private Button selectLevelButton;
     private Handler timerHandler = new Handler();
     public long startTime = 0;
     private SokoView sokoView;
+
+    public int moveCount = 0;
 
     public int currentLevel = 1;
 
@@ -51,8 +55,10 @@ public class MainActivity extends AppCompatActivity implements SokoView.OnLevelC
         setContentView(R.layout.activity_main);
 
         timerTextView = findViewById(R.id.timerTextView);
+        movesTextView = findViewById(R.id.movesTextView);
+
         restartButton = findViewById(R.id.restartButton);
-        selectLevelButton = findViewById(R.id.selectLevelButton); // Přidání tlačítka výběru levelu
+        selectLevelButton = findViewById(R.id.selectLevelButton);
         sokoView = findViewById(R.id.sokoView);
 
         if (sokoView != null) {
@@ -60,9 +66,9 @@ public class MainActivity extends AppCompatActivity implements SokoView.OnLevelC
         }
 
         restartButton.setOnClickListener(v -> restartLevel());
-        selectLevelButton.setOnClickListener(v -> openLevelSelection()); // Nastavení posluchače pro tlačítko
+        selectLevelButton.setOnClickListener(v -> openLevelSelection());
 
-        currentLevel = getIntent().getIntExtra("SELECTED_LEVEL", 1); // Výchozí hodnota 1
+        currentLevel = getIntent().getIntExtra("SELECTED_LEVEL", 1);
 
         nextLevelButton = findViewById(R.id.nextLevelButton);
 
@@ -97,13 +103,26 @@ public class MainActivity extends AppCompatActivity implements SokoView.OnLevelC
 
             timerTextView.setText(String.format("%d:%02d", savedMinutes, savedSeconds));
 
-            long elapsedMillis = savedMinutes * 60000 + savedSeconds * 1000;
-            resumeTimer(elapsedMillis);
+            moveCount = sharedPref.getInt("savedMoveCount", 0);
+            moveCount--;
+
+            if (!sokoView.CheckIfLevelIsComplete()){
+                long elapsedMillis = savedMinutes * 60000 + savedSeconds * 1000;
+
+                resumeTimer(elapsedMillis);
+            }
+
+            updateMoveCount();
 
         } else {
             loadSelectedLevel(currentLevel);
             startTimer();
         }
+    }
+
+    public void updateMoveCount() {
+        moveCount++;
+        movesTextView.setText("Počet tahů: " + moveCount);
     }
 
     @Override
@@ -146,9 +165,17 @@ public class MainActivity extends AppCompatActivity implements SokoView.OnLevelC
         stopTimer();
         startTimer();
 
+        moveCount = 0;
+        movesTextView.setText("Počet tahů: " + moveCount);
+
         if (sokoView != null) {
             sokoView.restartLevel();
         }
+    }
+
+    public void resetMoveCount() {
+        moveCount = 0;
+        movesTextView.setText("Počet tahů: " + moveCount);
     }
 
     private void openLevelSelection() {
@@ -167,7 +194,9 @@ public class MainActivity extends AppCompatActivity implements SokoView.OnLevelC
 
         if (requestCode == LEVEL_SELECTION_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
             int selectedLevel = data.getIntExtra("SELECTED_LEVEL", 1);
+
             Toast.makeText(this, "Načítám level " + selectedLevel, Toast.LENGTH_SHORT).show();
+
             loadSelectedLevel(selectedLevel);
         }
     }
@@ -178,7 +207,7 @@ public class MainActivity extends AppCompatActivity implements SokoView.OnLevelC
         startTimer();
 
         if (sokoView != null) {
-            sokoView.loadLevel(level); // Načte vybraný level v SokoView
+            sokoView.loadLevel(level);
         } else {
             Log.e("MainActivity", "sokoView is null!");
         }

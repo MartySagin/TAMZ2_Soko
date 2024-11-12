@@ -25,17 +25,17 @@ public class SokoView extends View {
 
     Bitmap[] bmp;
 
-    int lW; // Dynamická šířka levelu
-    int lH; // Dynamická výška levelu
+    int lW;
+    int lH;
 
-    int pX; // Pozice hráče X
-    int pY; // Pozice hráče Y
+    int pX;
+    int pY;
 
-    int width; // Šířka jedné buňky
-    int height; // Výška jedné buňky
+    int width;
+    int height;
 
-    private int[] level; // Dynamické pole pro aktuální level
-    private int[] levelCopy; // Kopie levelu pro restart
+    private int[] level;
+    private int[] levelCopy;
 
     public MainActivity mainActivity;
     boolean finishedLevel = false;
@@ -129,6 +129,8 @@ public class SokoView extends View {
         editor.putInt("savedLW", lW);
         editor.putInt("savedLH", lH);
 
+        editor.putInt("savedMoveCount", mainActivity.moveCount);
+
         editor.apply();
     }
 
@@ -178,6 +180,8 @@ public class SokoView extends View {
 
         pX = sharedPref.getInt("savedPX", 0);
         pY = sharedPref.getInt("savedPY", 0);
+
+        mainActivity.moveCount = sharedPref.getInt("savedMoveCount", 0);
 
         String savedLevelString = sharedPref.getString("savedLevel", null);
 
@@ -374,14 +378,12 @@ public class SokoView extends View {
         int viewHeight = getHeight();
 
         if (lW > 0 && lH > 0 && viewWidth > 0 && viewHeight > 0) {
-            // Determine the scaling factor based on the shorter dimension to maintain aspect ratio
+
             float cellWidth = (float) viewWidth / lW;
             float cellHeight = (float) viewHeight / lH;
 
-            // Use the minimum cell size to prevent stretching in one direction
             float cellSize = Math.min(cellWidth, cellHeight);
 
-            // Set cell width and height to the uniform cell size
             width = (int) cellSize;
             height = (int) cellSize;
         }
@@ -389,9 +391,8 @@ public class SokoView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        if (width <= 0 || height <= 0) return; // Skip drawing if cell size is not set properly
+        if (width <= 0 || height <= 0) return;
 
-        // Calculate offsets to center the level if there is extra space
         int offsetX = (getWidth() - (width * lW)) / 2;
         int offsetY = (getHeight() - (height * lH)) / 2;
 
@@ -413,7 +414,7 @@ public class SokoView extends View {
         }
     }
 
-    boolean CheckIfLevelIsComplete() {
+    public boolean CheckIfLevelIsComplete() {
         if (level == null) {
             return false;
         }
@@ -434,9 +435,12 @@ public class SokoView extends View {
 
         if (nextLevelButton != null) {
             nextLevelButton.setEnabled(true);
+
             nextLevelButton.setOnClickListener(v -> {
                 loadNextLevel();
+
                 nextLevelButton.setEnabled(false);
+
                 mainActivity.startTimer();
             });
         }
@@ -448,6 +452,8 @@ public class SokoView extends View {
     public void loadNextLevel() {
         if (levelCompleteListener != null) {
             levelCompleteListener.onLevelComplete();
+
+            mainActivity.resetMoveCount();
         }
     }
 
@@ -460,6 +466,7 @@ public class SokoView extends View {
             case MotionEvent.ACTION_DOWN:
                 startX = event.getX();
                 startY = event.getY();
+
                 return true;
 
             case MotionEvent.ACTION_UP:
@@ -480,7 +487,6 @@ public class SokoView extends View {
                         if (level[pY * lW + pX + 1] == 2 || level[pY * lW + pX + 1] == 5) {
                             if (level[pY * lW + pX + 2] == 1 || level[pY * lW + pX + 2] == 2 || level[pY * lW + pX + 2] == 5) break;
 
-                            // Set current position back to 3 if it was 5 in levelCopy
                             if (levelCopy[pY * lW + pX] == 5) {
                                 level[pY * lW + pX] = 3;
                             } else if (level[pY * lW + pX] == 0 || level[pY * lW + pX] == 4) {
@@ -494,6 +500,7 @@ public class SokoView extends View {
                             else level[pY * lW + pX + 2] = 2;
 
                             pX++;
+                            mainActivity.updateMoveCount();
                             break;
                         }
 
@@ -501,6 +508,7 @@ public class SokoView extends View {
                             level[pY * lW + pX] = 3;
                             level[pY * lW + pX + 1] = 4;
                             pX++;
+                            mainActivity.updateMoveCount();
                             break;
                         }
 
@@ -508,6 +516,7 @@ public class SokoView extends View {
                             level[pY * lW + pX] = 0;
                             level[pY * lW + pX + 1] = 4;
                             pX++;
+                            mainActivity.updateMoveCount();
                             break;
                         }
 
@@ -515,6 +524,7 @@ public class SokoView extends View {
                             level[pY * lW + pX] = 0;
                             level[pY * lW + pX + 1] = 4;
                             pX++;
+                            mainActivity.updateMoveCount();
                             break;
                         }
 
@@ -524,7 +534,6 @@ public class SokoView extends View {
                         if (level[pY * lW + pX - 1] == 2 || level[pY * lW + pX - 1] == 5) {
                             if (level[pY * lW + pX - 2] == 1 || level[pY * lW + pX - 2] == 2 || level[pY * lW + pX - 2] == 5) break;
 
-                            // Set current position back to 3 if it was 5 in levelCopy
                             if (levelCopy[pY * lW + pX] == 5) {
                                 level[pY * lW + pX] = 3;
                             } else if (level[pY * lW + pX] == 0 || level[pY * lW + pX] == 4) {
@@ -538,6 +547,7 @@ public class SokoView extends View {
                             else level[pY * lW + pX - 2] = 2;
 
                             pX--;
+                            mainActivity.updateMoveCount();
                             break;
                         }
 
@@ -545,6 +555,7 @@ public class SokoView extends View {
                             level[pY * lW + pX] = 3;
                             level[pY * lW + pX - 1] = 4;
                             pX--;
+                            mainActivity.updateMoveCount();
                             break;
                         }
 
@@ -552,6 +563,7 @@ public class SokoView extends View {
                             level[pY * lW + pX] = 0;
                             level[pY * lW + pX - 1] = 4;
                             pX--;
+                            mainActivity.updateMoveCount();
                             break;
                         }
 
@@ -559,6 +571,7 @@ public class SokoView extends View {
                             level[pY * lW + pX] = 0;
                             level[pY * lW + pX - 1] = 4;
                             pX--;
+                            mainActivity.updateMoveCount();
                             break;
                         }
                     }
@@ -570,7 +583,6 @@ public class SokoView extends View {
                         if (level[(pY + 1) * lW + pX] == 2 || level[(pY + 1) * lW + pX] == 5) {
                             if (level[(pY + 2) * lW + pX] == 1 || level[(pY + 2) * lW + pX] == 2 || level[(pY + 2) * lW + pX] == 5) break;
 
-                            // Set current position back to 3 if it was 5 in levelCopy
                             if (levelCopy[pY * lW + pX] == 5) {
                                 level[pY * lW + pX] = 3;
                             } else if (level[pY * lW + pX] == 0 || level[pY * lW + pX] == 4) {
@@ -584,6 +596,7 @@ public class SokoView extends View {
                             else level[(pY + 2) * lW + pX] = 2;
 
                             pY++;
+                            mainActivity.updateMoveCount();
                             break;
                         }
 
@@ -591,6 +604,7 @@ public class SokoView extends View {
                             level[pY * lW + pX] = 3;
                             level[(pY + 1) * lW + pX] = 4;
                             pY++;
+                            mainActivity.updateMoveCount();
                             break;
                         }
 
@@ -598,6 +612,7 @@ public class SokoView extends View {
                             level[pY * lW + pX] = 0;
                             level[(pY + 1) * lW + pX] = 4;
                             pY++;
+                            mainActivity.updateMoveCount();
                             break;
                         }
 
@@ -605,6 +620,7 @@ public class SokoView extends View {
                             level[pY * lW + pX] = 0;
                             level[(pY + 1) * lW + pX] = 4;
                             pY++;
+                            mainActivity.updateMoveCount();
                             break;
                         }
 
@@ -614,7 +630,6 @@ public class SokoView extends View {
                         if (level[(pY - 1) * lW + pX] == 2 || level[(pY - 1) * lW + pX] == 5) {
                             if (level[(pY - 2) * lW + pX] == 1 || level[(pY - 2) * lW + pX] == 2 || level[(pY - 2) * lW + pX] == 5) break;
 
-                            // Set current position back to 3 if it was 5 in levelCopy
                             if (levelCopy[pY * lW + pX] == 5) {
                                 level[pY * lW + pX] = 3;
                             } else if (level[pY * lW + pX] == 0 || level[pY * lW + pX] == 4) {
@@ -628,6 +643,7 @@ public class SokoView extends View {
                             else level[(pY - 2) * lW + pX] = 2;
 
                             pY--;
+                            mainActivity.updateMoveCount();
                             break;
                         }
 
@@ -635,6 +651,7 @@ public class SokoView extends View {
                             level[pY * lW + pX] = 3;
                             level[(pY - 1) * lW + pX] = 4;
                             pY--;
+                            mainActivity.updateMoveCount();
                             break;
                         }
 
@@ -642,6 +659,7 @@ public class SokoView extends View {
                             level[pY * lW + pX] = 0;
                             level[(pY - 1) * lW + pX] = 4;
                             pY--;
+                            mainActivity.updateMoveCount();
                             break;
                         }
 
@@ -649,6 +667,7 @@ public class SokoView extends View {
                             level[pY * lW + pX] = 0;
                             level[(pY - 1) * lW + pX] = 4;
                             pY--;
+                            mainActivity.updateMoveCount();
                             break;
                         }
                     }
@@ -670,7 +689,9 @@ public class SokoView extends View {
 
             if (savedLevelString != null) {
                 String[] levelStringArray = savedLevelString.split(",");
+
                 level = new int[levelStringArray.length];
+
                 for (int i = 0; i < levelStringArray.length; i++) {
                     level[i] = Integer.parseInt(levelStringArray[i]);
                 }
