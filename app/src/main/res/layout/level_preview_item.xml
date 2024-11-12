@@ -11,10 +11,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:textSize="14sp"
+        android:paddingBottom="8dp"
         android:textColor="@android:color/black"
-        android:textStyle="bold"
-        android:paddingBottom="8dp" />
+        android:textSize="14sp"
+        android:textStyle="bold" />
 
     <ImageView
         android:id="@+id/level_image"
@@ -24,4 +24,14 @@
         android:scaleType="centerCrop"
         android:background="@drawable/image_rounded_background"
         android:padding="8dp" />
+
+    <Button
+        android:id="@+id/resumeLevelButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Resume Level" />
+
+
 </LinearLayout>
+
+

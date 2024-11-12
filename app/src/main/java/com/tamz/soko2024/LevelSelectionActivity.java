@@ -1,6 +1,8 @@
 package com.tamz.soko2024;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -24,12 +26,24 @@ public class LevelSelectionActivity extends AppCompatActivity {
         levelRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         ArrayList<String> levels = getLevelsFromFile();
-        int previewSize = 150; // Náhled levelu v pixelech
+        int previewSize = 150;
 
         LevelPreviewAdapter adapter = new LevelPreviewAdapter(this, levels, levels.size(), previewSize, previewSize);
         levelRecyclerView.setAdapter(adapter);
+
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        ArrayList<String> levels = getLevelsFromFile();
+        int previewSize = 150;
+
+        LevelPreviewAdapter adapter = new LevelPreviewAdapter(this, levels, levels.size(), previewSize, previewSize);
+
+        levelRecyclerView.setAdapter(adapter);
+    }
     private ArrayList<String> getLevelsFromFile() {
         ArrayList<String> levels = new ArrayList<>();
 
@@ -46,10 +60,15 @@ public class LevelSelectionActivity extends AppCompatActivity {
                     int levelNumber = Integer.parseInt(parts[1]);
 
                     String levelName = reader.readLine().trim().replace("'", "");
+
+                    if (levelName.contains("#")){
+                        levelName = "No name";
+                    }
+
                     levels.add("Level " + levelNumber + ": " + levelName);
 
                     while ((line = reader.readLine()) != null && !line.isEmpty()) {
-                        // Předpokládáme, že grafika úrovně končí prázdným řádkem
+
                     }
                 }
             }

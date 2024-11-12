@@ -2,6 +2,7 @@ package com.tamz.soko2024;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -10,6 +11,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
@@ -35,7 +37,7 @@ public class SokoView extends View {
     private int[] level; // Dynamické pole pro aktuální level
     private int[] levelCopy; // Kopie levelu pro restart
 
-    private MainActivity mainActivity;
+    public MainActivity mainActivity;
     boolean finishedLevel = false;
 
 
@@ -80,9 +82,132 @@ public class SokoView extends View {
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
 
-        // Přepočítání velikostí buněk po změně velikosti zobrazení
         recalculateCellSize();
     }
+
+    public void saveGameState() {
+        final String SHARED_PREF_NAME = "level_progress_prefs";
+        SharedPreferences sharedPref = getContext().getSharedPreferences(SHARED_PREF_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+
+
+        editor.putInt("savedCurrentLevel", mainActivity.currentLevel);
+
+        long elapsedTimeMillis = System.currentTimeMillis() - mainActivity.startTime;
+        int elapsedMinutes = (int) (elapsedTimeMillis / 60000);
+        int elapsedSeconds = (int) ((elapsedTimeMillis / 1000) % 60);
+
+        editor.putInt("savedMinutes_" + mainActivity.currentLevel, elapsedMinutes);
+        editor.putInt("savedSeconds_" + mainActivity.currentLevel, elapsedSeconds);
+
+        StringBuilder levelString = new StringBuilder();
+
+        for (int i = 0; i < level.length; i++) {
+            levelString.append(level[i]);
+
+            if (i < level.length - 1) {
+                levelString.append(",");
+            }
+        }
+        editor.putString("savedLevel", levelString.toString());
+
+        StringBuilder originalLevelString = new StringBuilder();
+
+        for (int i = 0; i < levelCopy.length; i++) {
+            originalLevelString.append(levelCopy[i]);
+
+            if (i < levelCopy.length - 1) {
+                originalLevelString.append(",");
+            }
+        }
+
+        editor.putString("originalLevel", originalLevelString.toString());
+
+        editor.putInt("savedPX", pX);
+        editor.putInt("savedPY", pY);
+
+        editor.putInt("savedLW", lW);
+        editor.putInt("savedLH", lH);
+
+        editor.apply();
+    }
+
+    public void loadOriginalLevelState() {
+        final String SHARED_PREF_NAME = "level_progress_prefs";
+        SharedPreferences sharedPref = getContext().getSharedPreferences(SHARED_PREF_NAME, Context.MODE_PRIVATE);
+
+        String originalLevelString = sharedPref.getString("originalLevel", null);
+
+        if (originalLevelString != null) {
+            String[] originalLevelArray = originalLevelString.split(",");
+
+            levelCopy = new int[originalLevelArray.length];
+
+            for (int i = 0; i < originalLevelArray.length; i++) {
+                levelCopy[i] = Integer.parseInt(originalLevelArray[i]);
+            }
+
+            recalculateCellSize();
+
+            requestLayout();
+
+            invalidate();
+        } else {
+            Log.e("SokoView", "Failed to load original level data.");
+        }
+    }
+
+    public void loadGameState() {
+        final String SHARED_PREF_NAME = "level_progress_prefs";
+        SharedPreferences sharedPref = getContext().getSharedPreferences(SHARED_PREF_NAME, Context.MODE_PRIVATE);
+
+        int savedCurrentLevel = sharedPref.getInt("savedCurrentLevel", -1);
+
+        if (savedCurrentLevel == -1) {
+            Log.e("SokoView", "No saved game state found.");
+            return;
+        }
+
+        mainActivity.currentLevel = savedCurrentLevel;
+
+        long savedElapsedTime = sharedPref.getLong("savedElapsedTime_" + savedCurrentLevel, 0);
+        mainActivity.startTime = System.currentTimeMillis() - savedElapsedTime;
+
+        lW = sharedPref.getInt("savedLW", 0);
+        lH = sharedPref.getInt("savedLH", 0);
+
+        pX = sharedPref.getInt("savedPX", 0);
+        pY = sharedPref.getInt("savedPY", 0);
+
+        String savedLevelString = sharedPref.getString("savedLevel", null);
+
+        if (savedLevelString != null) {
+            String[] levelStringArray = savedLevelString.split(",");
+
+            level = new int[levelStringArray.length];
+
+            for (int i = 0; i < levelStringArray.length; i++) {
+                level[i] = Integer.parseInt(levelStringArray[i]);
+            }
+        } else {
+            Log.e("SokoView", "Failed to load saved level data.");
+
+            return;
+        }
+
+        loadOriginalLevelState();
+
+        finishedLevel = false;
+
+        recalculateCellSize();
+
+        requestLayout();
+
+        invalidate();
+
+        Log.i("SokoView", "Game state loaded with elapsed time: " + savedElapsedTime + " ms for level " + mainActivity.currentLevel);
+    }
+
 
     private int[] loadLevelFromFile(int levelNumber) {
         List<String> layoutLines = new ArrayList<>();
@@ -93,47 +218,52 @@ public class SokoView extends View {
 
         try {
             InputStream inputStream = getContext().getAssets().open("levels/levels.txt");
+
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+
             String line;
 
-            // First pass: Locate the level and determine the maximum width (lW) and height (lH)
             while ((line = reader.readLine()) != null) {
-                // Check if this line matches "Level X"
+
                 if (line.equals("Level " + levelNumber)) {
                     levelFound = true;
-                    layoutLines.clear(); // Clear any previous data
-                    continue; // Move to the next line for level name
+
+                    layoutLines.clear();
+
+                    continue;
                 }
 
                 if (levelFound) {
-                    // Skip the level name line after finding the level
+
                     if (line.startsWith("'")) {
                         continue;
                     }
 
-                    // Stop reading if we reach an empty line indicating the end of the level
                     if (line.isEmpty()) {
                         break;
                     }
 
-                    layoutLines.add(line); // Store each line of the layout temporarily
-                    lW = Math.max(lW, line.length()); // Update max width based on longest row
+                    layoutLines.add(line);
+
+                    lW = Math.max(lW, line.length());
                 }
             }
             reader.close();
 
             if (!levelFound) {
                 Log.e("SokoView", "Level " + levelNumber + " not found in the file.");
+
                 Toast.makeText(getContext(), "Level " + levelNumber + " not found.", Toast.LENGTH_SHORT).show();
+
                 return null;
             }
 
-            lH = layoutLines.size(); // Total lines determine the height
+            lH = layoutLines.size();
 
-            // Second pass: Build the level data array based on determined dimensions (lW x lH)
+
             List<Integer> levelData = new ArrayList<>();
+
             for (String layoutLine : layoutLines) {
-                // Add the character codes for each cell in the row
                 for (int i = 0; i < layoutLine.length(); i++) {
                     char ch = layoutLine.charAt(i);
                     switch (ch) {
@@ -163,7 +293,6 @@ public class SokoView extends View {
                     }
                 }
 
-                // Pad the row with floor tiles (0) up to the maximum width (lW)
                 for (int i = layoutLine.length(); i < lW; i++) {
                     levelData.add(0);
                 }
@@ -171,8 +300,8 @@ public class SokoView extends View {
 
             Log.d("SokoView", "Level " + levelNumber + " loaded: width " + lW + ", height " + lH);
 
-            // Convert List to array for returning
             int[] loadedLevel = new int[levelData.size()];
+
             for (int i = 0; i < levelData.size(); i++) {
                 loadedLevel[i] = levelData.get(i);
             }
@@ -184,10 +313,6 @@ public class SokoView extends View {
             return null;
         }
     }
-
-
-
-
 
 
     public void loadLevel(int levelNumber) {
@@ -209,7 +334,6 @@ public class SokoView extends View {
 
         finishedLevel = false;
 
-        // Aktualizace šířky a výšky buněk podle nových rozměrů levelu
         recalculateCellSize();
 
         requestLayout();
@@ -225,10 +349,12 @@ public class SokoView extends View {
                 if (level[y * lW + x] == 4) {
                     pX = x;
                     pY = y;
+
                     return;
                 }
             }
         }
+
         pX = 0;
         pY = 0;
     }
@@ -237,6 +363,9 @@ public class SokoView extends View {
         System.arraycopy(levelCopy, 0, level, 0, level.length);
         findPlayerStartPosition();
         finishedLevel = false;
+
+        nextLevelButton.setEnabled(false);
+
         invalidate();
     }
 
@@ -279,24 +408,47 @@ public class SokoView extends View {
             }
         }
 
-        // Check if the level is complete
-        if (CheckIfLevelIsComplete() && !finishedLevel) {
-            Toast.makeText(getContext(), "FINISHED!!!!", Toast.LENGTH_SHORT).show();
-            finishedLevel = true;
-
-            if (levelCompleteListener != null) {
-                levelCompleteListener.onLevelComplete();
-            }
+        if (!finishedLevel) {
+            CheckIfLevelIsComplete();
         }
     }
 
     boolean CheckIfLevelIsComplete() {
+        if (level == null) {
+            return false;
+        }
+
         for (int cell : level) {
             if (cell == 2) {
+                nextLevelButton.setEnabled(false);
+
                 return false;
             }
         }
+
+        finishedLevel = true;
+
+        mainActivity.stopTimer();
+
+        Toast.makeText(getContext(), "Level completed!", Toast.LENGTH_SHORT).show();
+
+        if (nextLevelButton != null) {
+            nextLevelButton.setEnabled(true);
+            nextLevelButton.setOnClickListener(v -> {
+                loadNextLevel();
+                nextLevelButton.setEnabled(false);
+                mainActivity.startTimer();
+            });
+        }
+
         return true;
+    }
+
+
+    public void loadNextLevel() {
+        if (levelCompleteListener != null) {
+            levelCompleteListener.onLevelComplete();
+        }
     }
 
     private float startX;
@@ -507,15 +659,34 @@ public class SokoView extends View {
         return super.onTouchEvent(event);
     }
 
-    public Bitmap generateLevelPreview(int levelNumber, int previewWidth, int previewHeight) {
-        // Načíst level
-        loadLevel(levelNumber);
+    public Bitmap generateLevelPreview(int levelNumber, int previewWidth, int previewHeight, boolean savedLevel) {
 
-        // Vytvořit bitmapu pro náhled
+        if (!savedLevel) {
+            loadLevel(levelNumber);
+        }else{
+            SharedPreferences sharedPref = getContext().getSharedPreferences("level_progress_prefs", Context.MODE_PRIVATE);
+
+            String savedLevelString = sharedPref.getString("savedLevel", null);
+
+            if (savedLevelString != null) {
+                String[] levelStringArray = savedLevelString.split(",");
+                level = new int[levelStringArray.length];
+                for (int i = 0; i < levelStringArray.length; i++) {
+                    level[i] = Integer.parseInt(levelStringArray[i]);
+                }
+            } else {
+                Log.e("SokoView", "Failed to load saved level data.");
+
+            }
+
+            lW = sharedPref.getInt("savedLW", 0);
+
+            lH = sharedPref.getInt("savedLH", 0);
+        }
+
         Bitmap previewBitmap = Bitmap.createBitmap(previewWidth, previewHeight, Bitmap.Config.ARGB_8888);
         Canvas previewCanvas = new Canvas(previewBitmap);
 
-        // Velikost jedné buňky pro náhled (upravte dle potřeby)
         int cellSize = Math.min(previewWidth / lW, previewHeight / lH);
 
         for (int y = 0; y < lH; y++) {
@@ -532,6 +703,14 @@ public class SokoView extends View {
 
         return previewBitmap;
     }
+
+
+    private Button nextLevelButton;
+
+    public void setNextLevelButton(Button button) {
+        this.nextLevelButton = button;
+    }
+
 
 
 
