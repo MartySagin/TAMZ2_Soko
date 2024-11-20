@@ -51,6 +51,8 @@ public class SokoView extends View {
         this.levelCompleteListener = listener;
     }
 
+    public HighScoreDatabaseHelper dbHelper;
+
     public SokoView(Context context) {
         super(context);
         init(context);
@@ -60,6 +62,7 @@ public class SokoView extends View {
         super(context, attrs);
         init(context);
         mainActivity = (MainActivity) context;
+
     }
 
     public SokoView(Context context, AttributeSet attrs, int defStyleAttr) {
@@ -75,6 +78,9 @@ public class SokoView extends View {
         bmp[3] = BitmapFactory.decodeResource(getResources(), R.drawable.goal);
         bmp[4] = BitmapFactory.decodeResource(getResources(), R.drawable.hero);
         bmp[5] = BitmapFactory.decodeResource(getResources(), R.drawable.boxok);
+
+
+        dbHelper = HighScoreDatabaseHelper.getInstance(context);
     }
 
 
@@ -420,33 +426,39 @@ public class SokoView extends View {
         }
 
         for (int cell : level) {
-            if (cell == 2) {
+            if (cell == 2) { // Box still remaining
                 nextLevelButton.setEnabled(false);
-
                 return false;
             }
         }
 
         finishedLevel = true;
-
         mainActivity.stopTimer();
 
-        Toast.makeText(getContext(), "Level completed!", Toast.LENGTH_SHORT).show();
+        int currentMoves = mainActivity.moveCount;
+        int bestMoves = dbHelper.getHighScore(mainActivity.currentLevel);
+
+        if (bestMoves == -1 || currentMoves < bestMoves) {
+            Log.d("SokoView", "New high score achieved: " + currentMoves);
+            dbHelper.saveHighScore(mainActivity.currentLevel, currentMoves);
+            Toast.makeText(getContext(), "New high score!", Toast.LENGTH_SHORT).show();
+        } else {
+            Log.d("SokoView", "Level completed without high score.");
+            Toast.makeText(getContext(), "Level completed!", Toast.LENGTH_SHORT).show();
+        }
 
         if (nextLevelButton != null) {
             nextLevelButton.setEnabled(true);
-
             nextLevelButton.setOnClickListener(v -> {
                 loadNextLevel();
-
                 nextLevelButton.setEnabled(false);
-
                 mainActivity.startTimer();
             });
         }
 
         return true;
     }
+
 
 
     public void loadNextLevel() {

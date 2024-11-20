@@ -25,6 +25,15 @@
         android:background="@drawable/image_rounded_background"
         android:padding="8dp" />
 
+    <TextView
+            android:id="@+id/level_top_score"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Top Score: "
+        android:textSize="14sp"
+        android:paddingTop="4dp"
+        android:textColor="#FF000000"/>
+
     <Button
         android:id="@+id/resumeLevelButton"
         android:layout_width="match_parent"

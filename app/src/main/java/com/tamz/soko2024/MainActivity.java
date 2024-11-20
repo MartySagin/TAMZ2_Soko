@@ -125,6 +125,10 @@ public class MainActivity extends AppCompatActivity implements SokoView.OnLevelC
         movesTextView.setText("Počet tahů: " + moveCount);
     }
 
+    public int getHighScoreForLevel(int level) {
+        return sokoView.dbHelper.getHighScore(level);
+    }
+
     @Override
     protected void onPause() {
         super.onPause();
